@@ -18,6 +18,8 @@ Tests for this subpackage were the same as tests for python APSP implementation,
 ### `py_tools`
 `py_tools` includes the code and tests for all the worker functions required for general computation. This includes MCMC methods, pairwise path length sampling, I/O and graph format conversion methods, and exact BFS implementations in a number of different forms. 
 
+`runner.py` contains example generator methods to calculate a variety of statistics on input networks.
+
 Tests are included in the `tests` subdirectory. Broadly, BFS tests rely on exact mathematical computations or matches to iGraph or Networkx implementations. MCMC tests revolve around setting a random seed and comparing our implementation with the [implementation](https://github.com/joelnish/double-edge-swap-mcmc/) of Fosdick et al. 
 ## Contact
 Please direct questions to <Alexander.W.Ray@colorado.edu>. 
