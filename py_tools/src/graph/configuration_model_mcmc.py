@@ -54,7 +54,7 @@ class AbstractMCMCSampler(ABC):
         :param threshold: Convergence threshold for difference in entropy
         :return: Number of swaps
         """
-        def populate_assortivaties():
+        def populate_assortativities():
             assort_arr = []
             for _ in range(samples_per_group):
                 for _ in range(int(np.ceil(t/samples_per_group))):
@@ -68,8 +68,8 @@ class AbstractMCMCSampler(ABC):
 
         threshold_met = False
         while not threshold_met:
-            assort1 = populate_assortivaties()
-            assort2 = populate_assortivaties()
+            assort1 = populate_assortativities()
+            assort2 = populate_assortativities()
             total_swaps += 2*t
             if np.abs(np.mean(assort1) - np.mean(assort2)) < threshold:
                 threshold_met = True
@@ -109,6 +109,73 @@ class AbstractMCMCSampler(ABC):
         self._edges[p1] = (u, x)
         self._edges[p2] = (v, y)
 
+    def _localized_swap(self, p):
+        """
+        Perform one stub-labeled double-edge swap as specified in Fosdick et. al.
+        Modification of their code https://github.com/joelnish/double-edge-swap-mcmc/blob/master/dbl_edge_mcmc.py
+        :return:
+        """
+        p1 = np.random.randint(self._m)
+        u, v = self._edges[p1]
+        print('u: ' + str(u))
+        print('v: ' + str(v))
+        x = list(self._G[u])[np.random.randint(0, len(self._G[u].keys()))]
+        print('neighbor: ' + str(x))
+        while True:
+            x = list(self._G[x])[np.random.randint(0, len(self._G[x].keys()))]
+            print('x: ' + str(x))
+            if np.random.rand() < p:
+                break
+        y = list(self._G[x])[np.random.randint(0, len(self._G[x].keys()))]
+        print('y: ' + str(y))
+
+
+        for i, e in enumerate(self._edges):
+            if e[0] == x:
+                if e[1] == y:
+                    p2 = i
+                    break
+            if e[1] == x:
+                if e[0] == y:
+                    p2 = i
+                    break
+
+        if np.random.rand() < 0.5:
+            tmp = x
+            x = y
+            y = tmp
+        print('x: ' + str(x))
+        print('y: ' + str(y))
+
+        # ensure no multigraph
+        if x in self._G[u] or y in self._G[v]:
+            return
+        if u == v and x == y:
+            return
+
+        # ensure no loops
+        if u == x or u == y or v == x or v == y:
+            return
+        print('swaps performed')
+
+        '''
+        print('num triangles on node u before swap: ' + str(nx.triangles(self._G, u)))
+        print('num triangles on node v before swap: ' + str(nx.triangles(self._G, v)))
+        print('num triangles on node x before swap: ' + str(nx.triangles(self._G, x)))
+        print('num triangles on node y before swap: ' + str(nx.triangles(self._G, y)))
+        '''
+
+        self._G.remove_edges_from([(u, v), (x, y)])
+        self._G.add_edges_from([(u, x), (v, y)])
+        self._edges[p1] = (u, x)
+        self._edges[p2] = (v, y)
+        '''
+        print('num triangles on node u after swap: ' + str(nx.triangles(self._G, u)))
+        print('num triangles on node v after swap: ' + str(nx.triangles(self._G, v)))
+        print('num triangles on node x after swap: ' + str(nx.triangles(self._G, x)))
+        print('num triangles on node y after swap: ' + str(nx.triangles(self._G, y)))
+        '''
+
 
 class MCMCSampler(AbstractMCMCSampler):
     def __init__(self, g, burn_swaps=None, convergence_threshold=0.05, mixing_swaps=None):
@@ -142,12 +209,15 @@ class MCMCSamplerNX(AbstractMCMCSampler):
         super().__init__(G, burn_swaps=burn_swaps,
                          convergence_threshold=convergence_threshold, mixing_swaps=mixing_swaps)
 
-    def get_new_sample(self):
+    def get_new_sample(self, localized=False, p=0):
         """
         Mix self._G for self._mixing_swaps and return sample
         """
         for _ in range(self._mixing_swaps):
-            self._swap()
+            if localized:
+                self._localized_swap(p)
+            else:
+                self._swap()
         return self._G
 
 

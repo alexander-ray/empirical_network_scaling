@@ -2,6 +2,7 @@ import networkx as nx
 import numpy as np
 import numba as nb
 jit = nb.jit
+from collections import defaultdict
 
 
 def all_pairs_shortest_paths(G):
@@ -9,20 +10,31 @@ def all_pairs_shortest_paths(G):
     Driver function for fast APSP algorithm on simple graph with multiple disconnected components
 
     :param G: nx.Graph
-    :return: 1d ndarray of size \sum_{i}n_i^2 where n_i is the number of nodes in the ith connected component
+    :return: distribution dictionary with keys as distances and values as the number of distances
+                sum of values (number of paths) is\sum_{i}n_i^2
+                where n_i is the number of nodes in the ith connected component
+
     """
+    results = defaultdict(int)
     if len(G) <= 1:
-        return np.array([])
+        results[0.0] += 1
+        return results
     if nx.is_connected(G):
-        return _all_pairs_shortest_paths_preprocessor(G, rolling_sum=False)
+        res = _all_pairs_shortest_paths_preprocessor(G, rolling_sum=False)
+        for e in res:
+            results[e] += 1
+        return results
     else:
-        results = []
         gen = (G.subgraph(c) for c in nx.connected_components(G))
         for g in gen:
-            res = _all_pairs_shortest_paths_preprocessor(g, rolling_sum=False)
-            if res is not None:
-                results.append(res)
-        return np.concatenate(results)
+            if len(g) <= 1:
+                results[0.0] += 1
+            else:
+                res = _all_pairs_shortest_paths_preprocessor(g, rolling_sum=False)
+                if res is not None:
+                    for e in res:
+                        results[e] += 1
+        return results
 
 
 def all_pairs_shortest_paths_rolling_sum(G):
