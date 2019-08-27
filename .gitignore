@@ -1,8 +1,8 @@
 # Data files
 .idea/
 networks/
-Texas84.txt
-Yale4.txt
+*.txt
+*.gml
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

@@ -13,6 +13,8 @@ def networkx_from_gml(filepath):
     G = igraph_from_gml(filepath)
     edges = [e.tuple for e in G.es]
     G_nx = nx.Graph()
+
+    G_nx.add_nodes_from(range(G.vcount()))
     G_nx.add_edges_from(edges)
     return G_nx
 
