@@ -55,7 +55,6 @@ std::map<int, std::vector<int>> read_gml(std::string filename) {
 
     FILE *infile;
     infile = fopen(filename.c_str(), "r");
-
     igraph_read_graph_gml(&g, infile);
     fclose(infile);
 
