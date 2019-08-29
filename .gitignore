@@ -1,8 +1,6 @@
 # Data files
 .idea/
 networks/
-*.txt
-*.gml
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

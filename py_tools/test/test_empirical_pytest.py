@@ -2,6 +2,7 @@ from src.graph.empirical import *
 from src.graph.apsp_multi_component import *
 from src.graph.semisparse import *
 
+
 #############################################
 # Test: networkx to igraph
 #############################################
@@ -15,6 +16,7 @@ def test_nx_to_igraph_empty():
            and list(sorted(list(G.edges))) == list(sorted([e.tuple for e in g.es])) \
            and s / n == igraph_mgd
 
+
 def test_nx_to_igraph_1():
     G = nx.Graph()
     G.add_edges_from([(0, 1), (0, 2)])
@@ -22,7 +24,7 @@ def test_nx_to_igraph_1():
 
     n, s = all_pairs_shortest_paths_rolling_sum(G)
     igraph_mgd = apsp_multi_component_rolling_sum(g)
-    assert nx.degree_assortativity_coefficient(G) == g.assortativity_degree() \
+    assert nx.degree_assortativity_coefficient(G) == g.assortativity_degree(directed=False) \
            and len(G) == g.vcount() and G.number_of_edges() == g.ecount() \
            and list(sorted(list(G.edges))) == list(sorted([e.tuple for e in g.es])) \
            and s / n == igraph_mgd
@@ -34,7 +36,7 @@ def test_nx_to_igraph_2():
 
     n, s = all_pairs_shortest_paths_rolling_sum(G)
     igraph_mgd = apsp_multi_component_rolling_sum(g)
-    assert round(nx.degree_assortativity_coefficient(G), 6) == round(g.assortativity_degree(), 6) \
+    assert round(nx.degree_assortativity_coefficient(G), 6) == round(g.assortativity_degree(directed=False), 6) \
            and len(G) == g.vcount() and G.number_of_edges() == g.ecount() \
            and list(sorted(list(G.edges))) == list(sorted([e.tuple for e in g.es])) \
            and s / n == igraph_mgd
@@ -50,7 +52,7 @@ def test_nx_to_igraph_3():
 
     n, s = all_pairs_shortest_paths_rolling_sum(G)
     igraph_mgd = apsp_multi_component_rolling_sum(g)
-    assert round(nx.degree_assortativity_coefficient(G), 6) == round(g.assortativity_degree(), 6) \
+    assert round(nx.degree_assortativity_coefficient(G), 6) == round(g.assortativity_degree(directed=False), 6) \
            and len(G) == g.vcount() and G.number_of_edges() == g.ecount() \
            and list(sorted(list(G.edges))) == list(sorted([e.tuple for e in g.es])) \
            and s/n == igraph_mgd
@@ -78,7 +80,7 @@ def test_igraph_to_nx_1():
 
     n, s = all_pairs_shortest_paths_rolling_sum(G)
     igraph_mgd = apsp_multi_component_rolling_sum(g)
-    assert nx.degree_assortativity_coefficient(G) == g.assortativity_degree() \
+    assert nx.degree_assortativity_coefficient(G) == g.assortativity_degree(directed=False) \
            and len(G) == g.vcount() and G.number_of_edges() == g.ecount() \
            and list(sorted(list(G.edges))) == list(sorted([e.tuple for e in g.es]))\
            and s/n == igraph_mgd
@@ -94,7 +96,7 @@ def test_igraph_to_nx_2():
 
     n, s = all_pairs_shortest_paths_rolling_sum(G)
     igraph_mgd = apsp_multi_component_rolling_sum(g)
-    assert round(nx.degree_assortativity_coefficient(G), 6) == round(g.assortativity_degree(), 6) \
+    assert round(nx.degree_assortativity_coefficient(G), 6) == round(g.assortativity_degree(directed=False), 6) \
            and len(G) == g.vcount() and G.number_of_edges() == g.ecount() \
            and nx_edges == \
                list(sorted([e.tuple for e in g.es], key=lambda x: (x[0], x[1])))\
@@ -111,7 +113,7 @@ def test_igraph_to_nx_3():
 
     n, s = all_pairs_shortest_paths_rolling_sum(G)
     igraph_mgd = apsp_multi_component_rolling_sum(g)
-    assert round(nx.degree_assortativity_coefficient(G), 6) == round(g.assortativity_degree(), 6) \
+    assert round(nx.degree_assortativity_coefficient(G), 6) == round(g.assortativity_degree(directed=False), 6) \
            and len(G) == g.vcount() and G.number_of_edges() == g.ecount() \
            and list(sorted(list(G.edges))) == list(sorted([e.tuple for e in g.es]))\
            and s/n == igraph_mgd
@@ -128,10 +130,11 @@ def test_igraph_to_nx_4():
 
     n, s = all_pairs_shortest_paths_rolling_sum(G)
     igraph_mgd = apsp_multi_component_rolling_sum(g)
-    assert round(nx.degree_assortativity_coefficient(G), 6) == round(g.assortativity_degree(), 6) \
+    assert round(nx.degree_assortativity_coefficient(G), 6) == round(g.assortativity_degree(directed=False), 6) \
            and len(G) == g.vcount() and G.number_of_edges() == g.ecount() \
            and list(sorted(list(G.edges))) == list(sorted([e.tuple for e in g.es]))\
            and s/n == igraph_mgd
+
 
 #############################################
 # Test: igraph to networkx and back to igraph
@@ -150,7 +153,22 @@ def test_igraph_to_nx_to_igraph_1():
     n, s = all_pairs_shortest_paths_rolling_sum(G)
     igraph_mgd = apsp_multi_component_rolling_sum(g)
     igraph2_mgd = apsp_multi_component_rolling_sum(g2)
-    assert round(nx.degree_assortativity_coefficient(G), 6) == round(g.assortativity_degree(), 6) == round(g2.assortativity_degree(), 6) \
+    assert round(nx.degree_assortativity_coefficient(G), 6) == round(g.assortativity_degree(directed=False), 6) == round(g2.assortativity_degree(directed=False), 6) \
            and len(G) == g.vcount() == g2.vcount() and G.number_of_edges() == g.ecount() == g2.ecount() \
            and list(sorted(list(G.edges))) == list(sorted([e.tuple for e in g.es])) == list(sorted([e.tuple for e in g2.es])) \
            and s/n == igraph_mgd == igraph2_mgd
+
+
+#############################################
+# Test: reading simple and complex has same result
+#############################################
+def test_files_1():
+    g = igraph_from_gml('three_components_1.gml')
+    g2 = igraph_from_gml('three_components_1_complex.gml')
+
+    igraph_mgd = apsp_multi_component_rolling_sum(g)
+    igraph2_mgd = apsp_multi_component_rolling_sum(g2)
+    assert g.assortativity_degree(directed=False) == g2.assortativity_degree(directed=False) \
+           and g.vcount() == g2.vcount() and g.ecount() == g2.ecount() \
+           and list(sorted([e.tuple for e in g.es])) == list(sorted([e.tuple for e in g2.es])) \
+           and igraph_mgd == igraph2_mgd

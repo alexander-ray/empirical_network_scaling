@@ -1,0 +1,9 @@
+singleton.gml
+singletons.gml
+single_edge.gml
+disconnected_triads.gml
+three_components_1.gml
+three_components_1_complex.gml
+three_components_2.gml
+three_components_3.gml
+zkc.gml
