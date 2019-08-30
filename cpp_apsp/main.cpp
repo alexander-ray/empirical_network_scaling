@@ -19,7 +19,7 @@ std::vector<std::string> get_filenames(std::string filename) {
     std::ifstream infile(filename);
     std::string name;
 
-    //std::string appendee = "/scratch/Users/alra7284/gmls/Anna/";
+    std::string appendee = "/scratch/Users/alra7284/gmls/Anna/";
     std::string appendee = "";
     std::vector<std::string> filenames;
     while(std::getline(infile, name)) {
@@ -55,7 +55,7 @@ std::map<int, double> get_distance_distribution(std::string filename, int num_th
     }
 
     unsigned long long print_threshold = num_distances/10;
-    //std::cout << "print thres " << print_threshold << std::endl;
+    std::cout << "print thres " << print_threshold << std::endl;
     for (auto const &component : components) {
         auto comp_size = component.size();
         if (comp_size <= 1) {
@@ -64,8 +64,8 @@ std::map<int, double> get_distance_distribution(std::string filename, int num_th
                 distance_distribution[0] = 1;
             else
                 distance_distribution[0]++;
-            //if (distance_index % print_threshold == 0)
-            //    std::cout << distance_index << std::endl;
+            if (distance_index % print_threshold == 0)
+                std::cout << distance_index << std::endl;
             continue;
         }
         std::vector<std::vector<unsigned long>> trackers(num_threads, std::vector<unsigned long>(comp_size, 0));
@@ -86,8 +86,8 @@ std::map<int, double> get_distance_distribution(std::string filename, int num_th
                         distance_distribution[j] = 1;
                     else
                         distance_distribution[j]++;
-                    //if (distance_index % print_threshold == 0)
-                    //    std::cout << distance_index << std::endl;
+                    if (distance_index % print_threshold == 0)
+                        std::cout << distance_index << std::endl;
                 }
             }
         }
