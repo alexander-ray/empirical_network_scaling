@@ -1,8 +1,5 @@
 import sys
-import time
 import numpy as np
-import csv
-sys.path.append('/Users/alexray/Dropbox/graph_scaling/empirical_network_scaling')
 from empirical_network_scaling.py_tools.src.graph import semisparse as ss
 from empirical_network_scaling.py_tools.src.graph import empirical
 from empirical_network_scaling.py_tools.src.graph import configuration_model_mcmc
@@ -14,7 +11,6 @@ from empirical_network_scaling.py_tools.src.utils.dict_statistics import *
 from abc import ABC, abstractclassmethod
 import os
 import igraph
-from scipy.stats import sem
 
 
 class NetworkStatisticGenerator(ABC):
@@ -146,7 +142,7 @@ class ErdosRenyiGenerator(NetworkStatisticGenerator):
         sys.stdout.flush()
 
         for _ in range(20):
-            g = igraph.GraphBase.Erdos_Renyi(n=n, m=m, directed=False, loops=False)
+            g = igraph.Graph.Erdos_Renyi(n=n, m=m, directed=False, loops=False)
             if n < 1000:
                 dist = apsp_multi_component(g)
                 mgd = mean_of_dict(dist)
