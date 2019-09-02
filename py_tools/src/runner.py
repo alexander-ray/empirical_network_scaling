@@ -20,6 +20,34 @@ class NetworkStatisticGenerator(ABC):
         pass
 
 
+class BruteMGDGenerator(NetworkStatisticGenerator):
+    @staticmethod
+    def generate(source):
+        if type(source) == str:
+            G = empirical.networkx_from_gml(source)
+        else:
+            G = source
+
+        n = len(G)
+        degrees = list(sorted([degree[1] for degree in G.degree]))
+        c = sum(degrees) / len(G)
+
+        num_distances, sum_distances = ss.all_pairs_shortest_paths_rolling_sum(G)
+        if num_distances == 0:
+            mgd = 0
+        else:
+            mgd = sum_distances / num_distances
+
+        # Print info for tracking after calculation has been completed
+        print([source, n, c, mgd])
+        sys.stdout.flush()
+
+        if type(source) == str:
+            return [[source, n, c, mgd]]
+        else:
+            return [['', n, c, mgd]]
+
+
 class DistanceDistributionGenerator(NetworkStatisticGenerator):
     @staticmethod
     def generate(source):
