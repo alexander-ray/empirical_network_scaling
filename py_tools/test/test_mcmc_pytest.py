@@ -1,8 +1,4 @@
-import igraph
-import itertools
-import networkx
-from src.graph.configuration_model_mcmc import *
-from src.graph.empirical import networkx_to_igraph, igraph_to_networkx
+from src.graph.mcmc import *
 
 #############################################
 # Test: stepping configuration mode

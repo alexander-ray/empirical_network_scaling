@@ -27,8 +27,6 @@ class AbstractMCMCSampler(ABC):
         self._m = len(self._edges)
         self._n = len(self._G)
         self._degrees = [x[1] for x in sorted(list(G.degree), key=lambda x: x[0])]
-        self._degrees_80_percentile = np.percentile(self._degrees, 80)
-        self._degrees_40_percentile = np.percentile(self._degrees, 40)
 
         if mixing_swaps:
             self._mixing_swaps = mixing_swaps
@@ -131,75 +129,34 @@ class AbstractMCMCSampler(ABC):
         Modification of their code https://github.com/joelnish/double-edge-swap-mcmc/blob/master/dbl_edge_mcmc.py
         :return:
         """
-        def _choose_edge(sign=1):
+        def _choose_edge():
             while True:
                 n1 = np.random.randint(self._n)
                 if len(self._G[n1]) > 0:
                     break
 
             deg1 = self._degrees[n1]
-            deg_diff = np.inf * (sign*-1)
+            deg_diff = -1 * np.inf
             n2 = -1
             for i in self._G[n1]:
                 difference = np.abs(self._degrees[i] - deg1)
-                if difference > deg_diff and sign > 0:
-                    deg_diff = difference
-                    n2 = i
-                if difference < deg_diff and sign < 0:
+                if difference > deg_diff:
                     deg_diff = difference
                     n2 = i
             return tuple(sorted((n1, n2)))
-        
-        if np.random.rand() < np.abs(p):
+
+        if np.random.rand() < p:
             self._swap()
             return
-        if p > 0:
-            sign = 1
-        else:
-            sign = -1
-        u, v = _choose_edge(sign)
-        x, y = _choose_edge(sign)
 
-        #if any(i is None for i in [u, v, x, y]):
-        #    return
-        
-        if p < 0:
-            total_diff_uv_xy = np.abs(self._G.degree[u] - self._G.degree[v]) + np.abs(self._G.degree[x] - self._G.degree[y])
-            total_diff_ux_vy = np.abs(self._G.degree[u] - self._G.degree[x]) + np.abs(self._G.degree[v] - self._G.degree[y])
-            total_diff_uy_vx = np.abs(self._G.degree[u] - self._G.degree[y]) + np.abs(self._G.degree[v] - self._G.degree[x])
+        u, v = _choose_edge()
+        x, y = _choose_edge()
 
-            #if total_diff_uv_xy < total_diff_ux_vy and total_diff_uv_xy < total_diff_uy_vx:
-            #    return
-        
-        if p < 0:
-            #if total_diff_uy_vx < total_diff_ux_vy:
-            if np.random.rand() < 0.5:
-                tmp = x
-                x = y
-                y = tmp
-            '''
-            uv_larger = u > x and u > y and v > x and v > y
-            xy_larger = x > u and x > v and y > u and y > v
-            # Not evenly larger or smaller pairs
-            if uv_larger == xy_larger:
-                return
-            if uv_larger:
-                if not (u > self._degrees_80_percentile and x < self._degrees_40_percentile):
-                    return
-                if not (v > self._degrees_80_percentile and y < self._degrees_40_percentile):
-                    return
-            if xy_larger:
-                if not (x > self._degrees_80_percentile and u < self._degrees_40_percentile):
-                    return
-                if not (y > self._degrees_80_percentile and v < self._degrees_40_percentile):
-                    return
-            '''
-        else:
-            if np.random.rand() < 0.5:
-                tmp = x
-                x = y
-                y = tmp
-        
+        if np.random.rand() < 0.5:
+            tmp = x
+            x = y
+            y = tmp
+
         # ensure no multigraph
         if x in self._G[u] or y in self._G[v]:
             return
@@ -209,7 +166,7 @@ class AbstractMCMCSampler(ABC):
         # ensure no loops
         if u == x or u == y or v == x or v == y:
             return
-        
+
         # Remove edges from graph and edge dictionary
         self._G.remove_edges_from([(u, v), (x, y)])
         p1 = self._edges_dict.pop(tuple(sorted((u, v))))

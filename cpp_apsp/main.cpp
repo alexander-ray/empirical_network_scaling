@@ -20,7 +20,7 @@ std::vector<std::string> get_filenames(std::string filename) {
     std::string name;
 
     std::string appendee = "/scratch/Users/alra7284/gmls/Anna/";
-    std::string appendee = "";
+    //std::string appendee = "";
     std::vector<std::string> filenames;
     while(std::getline(infile, name)) {
         filenames.push_back(appendee + name);

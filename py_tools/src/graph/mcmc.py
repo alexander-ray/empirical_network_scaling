@@ -1,11 +1,8 @@
 import networkx as nx
 from abc import ABC, abstractmethod
-import igraph
 from .empirical import networkx_to_igraph, igraph_to_networkx
 import numpy as np
 import numba as nb
-from scipy.stats import ks_2samp
-from scipy.stats import entropy
 jit = nb.jit
 
 
@@ -22,8 +19,11 @@ class AbstractMCMCSampler(ABC):
 
         # Precomputations
         self._edges = list([e for e in self._G.edges])
+        self._edges_dict = {tuple(sorted(e)): i for i, e in enumerate(self._edges)}
         self._edge_indices = list(range(self._G.number_of_edges()))
         self._m = len(self._edges)
+        self._n = len(self._G)
+        self._degrees = [x[1] for x in sorted(list(G.degree), key=lambda x: x[0])]
 
         if mixing_swaps:
             self._mixing_swaps = mixing_swaps
@@ -48,10 +48,9 @@ class AbstractMCMCSampler(ABC):
 
     def _burn_to_convergence(self, threshold):
         """
-        Function to determine number of swaps necessary to achieve convergence of markov chain
-        Uses entropy of degree assortativity to assess convergence
+        Function to swaps to achieve convergence of markov chain
 
-        :param threshold: Convergence threshold for difference in entropy
+        :param threshold: Convergence threshold for difference in degree assortativity sample means
         :return: Number of swaps
         """
         def populate_assortativities():
@@ -79,7 +78,7 @@ class AbstractMCMCSampler(ABC):
     def _swap(self):
         """
         Perform one stub-labeled double-edge swap as specified in Fosdick et. al.
-        Modification of their code https://github.com/joelnish/double-edge-swap-mcmc/blob/master/dbl_edge_mcmc.py
+        Modification of Fosdick et. al. code https://github.com/joelnish/double-edge-swap-mcmc/blob/master/dbl_edge_mcmc.py
         :return:
         """
         p1 = np.random.randint(self._m)
@@ -106,15 +105,79 @@ class AbstractMCMCSampler(ABC):
 
         # Remove edges from graph and edge dictionary
         self._G.remove_edges_from([(u, v), (x, y)])
+        self._edges_dict.pop(tuple(sorted((u, v))))
+        self._edges_dict.pop(tuple(sorted((x, y))))
 
         # Replace edges in list
-        new_edge_1 = (u, x)
-        new_edge_2 = (v, y)
+        new_edge_1 = tuple(sorted((u, x)))
+        new_edge_2 = tuple(sorted((v, y)))
         self._edges[p1] = new_edge_1
         self._edges[p2] = new_edge_2
 
         # Add new edges
         self._G.add_edges_from([new_edge_1, new_edge_2])
+        self._edges_dict[new_edge_1] = p1
+        self._edges_dict[new_edge_2] = p2
+
+    def _local_swap(self, p):
+        """
+        Modified double edge swap w/ "localization" feature
+        Modification of their code https://github.com/joelnish/double-edge-swap-mcmc/blob/master/dbl_edge_mcmc.py
+        :return:
+        """
+        def _choose_edge():
+            while True:
+                n1 = np.random.randint(self._n)
+                if len(self._G[n1]) > 0:
+                    break
+
+            deg1 = self._degrees[n1]
+            deg_diff = -1 * np.inf
+            n2 = -1
+            for i in self._G[n1]:
+                difference = np.abs(self._degrees[i] - deg1)
+                if difference > deg_diff:
+                    deg_diff = difference
+                    n2 = i
+            return tuple(sorted((n1, n2)))
+
+        if np.random.rand() < p:
+            self._swap()
+            return
+
+        u, v = _choose_edge()
+        x, y = _choose_edge()
+
+        if np.random.rand() < 0.5:
+            tmp = x
+            x = y
+            y = tmp
+
+        # ensure no multigraph
+        if x in self._G[u] or y in self._G[v]:
+            return
+        if u == v and x == y:
+            return
+
+        # ensure no loops
+        if u == x or u == y or v == x or v == y:
+            return
+
+        # Remove edges from graph and edge dictionary
+        self._G.remove_edges_from([(u, v), (x, y)])
+        p1 = self._edges_dict.pop(tuple(sorted((u, v))))
+        p2 = self._edges_dict.pop(tuple(sorted((x, y))))
+
+        # Replace edges in list
+        new_edge_1 = tuple(sorted((u, x)))
+        new_edge_2 = tuple(sorted((v, y)))
+        self._edges[p1] = new_edge_1
+        self._edges[p2] = new_edge_2
+
+        # Add new edges
+        self._G.add_edges_from([new_edge_1, new_edge_2])
+        self._edges_dict[new_edge_1] = p1
+        self._edges_dict[new_edge_2] = p2
 
 
 class MCMCSampler(AbstractMCMCSampler):
@@ -122,19 +185,19 @@ class MCMCSampler(AbstractMCMCSampler):
         """
         :param g: igraph.Graph
         :param burn_swaps: Number of swaps for burn-in. If falsey, uses convergence threshold
-        :param convergence_threshold: Threshold for KL-divergence for burn-in
+        :param convergence_threshold: Threshold for mean difference for burn-in purposes
         :param mixing_swaps: Number of swaps between samples. If falsey, default to 2m
         """
         # Networkx version of graph
         super().__init__(igraph_to_networkx(g), burn_swaps=burn_swaps,
                          convergence_threshold=convergence_threshold, mixing_swaps=mixing_swaps)
 
-    def get_new_sample(self):
+    def get_new_sample(self, p=1):
         """
         Mix self._G for self._mixing_swaps and return sample
         """
         for _ in range(self._mixing_swaps):
-            self._swap()
+            self._swap(p)
         return networkx_to_igraph(self._G)
 
 
@@ -143,18 +206,18 @@ class MCMCSamplerNX(AbstractMCMCSampler):
         """
         :param G: nx.Graph
         :param burn_swaps: Number of swaps for burn-in. If falsey, uses convergence threshold
-        :param convergence_threshold: Threshold for KL-divergence for burn-in
+        :param convergence_threshold: Threshold for mean difference for burn-in purposes
         :param mixing_swaps: Number of swaps between samples. If falsey, default to 2m
         """
         super().__init__(G, burn_swaps=burn_swaps,
                          convergence_threshold=convergence_threshold, mixing_swaps=mixing_swaps)
 
-    def get_new_sample(self):
+    def get_new_sample(self, p=1):
         """
         Mix self._G for self._mixing_swaps and return sample
         """
         for _ in range(self._mixing_swaps):
-            self._swap()
+            self._swap(p)
         return self._G
 
 
