@@ -2,8 +2,7 @@ import sys
 import numpy as np
 from empirical_network_scaling.py_tools.src.graph import semisparse as ss
 from empirical_network_scaling.py_tools.src.graph import empirical
-from empirical_network_scaling.py_tools.src.graph import configuration_model_mcmc
-from empirical_network_scaling.py_tools.src.graph import degree_aware_des
+from empirical_network_scaling.py_tools.src.graph import mcmc
 from empirical_network_scaling.py_tools.src.multi import helper as mh
 from empirical_network_scaling.py_tools.src.graph import pathsample as ps
 from empirical_network_scaling.py_tools.src.graph.apsp_multi_component import apsp_multi_component
@@ -202,9 +201,7 @@ class MCMCGenerator(NetworkStatisticGenerator):
         sys.stdout.flush()
 
         g = empirical.igraph_from_gml(source)
-        #sampler = configuration_model_mcmc.MCMCSampler(g=g, burn_swaps=None,
-        #                                               convergence_threshold=0.05, mixing_swaps=None)
-        sampler = degree_aware_des.MCMCSampler(g=g, burn_swaps=None, convergence_threshold=0.1, mixing_swaps=None)
+        sampler = mcmc.MCMCSampler(g=g, burn_swaps=None, convergence_threshold=0.05, mixing_swaps=None, p=1)
         n = g.vcount()
         degrees = list(sorted([d for d in g.degree(mode='ALL', loops=False)]))
         c = sum(degrees) / n
@@ -216,8 +213,7 @@ class MCMCGenerator(NetworkStatisticGenerator):
         sys.stdout.flush()
 
         for _ in range(10):
-            #g = sampler.get_new_sample(p=0.2)
-            g = sampler.get_new_sample(p=0.4)
+            g = sampler.get_new_sample()
             if n < 1000:
                 dist = apsp_multi_component(g)
                 mgd = mean_of_dict(dist)

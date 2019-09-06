@@ -8,14 +8,16 @@ jit = nb.jit
 
 class AbstractMCMCSampler(ABC):
     @abstractmethod
-    def __init__(self, G, burn_swaps=None, convergence_threshold=0.05, mixing_swaps=None):
+    def __init__(self, G, burn_swaps=None, convergence_threshold=0.05, mixing_swaps=None, p=1):
         """
         :param G: nx.Graph
         :param burn_swaps: Number of swaps for burn-in. If None, uses convergence threshold
         :param convergence_threshold: Threshold for KL-divergence for burn-in
         :param mixing_swaps: Number of swaps between samples. If falsey, default to 2m
+        :param p: Probability of performing normal double edge swaps
         """
         self._G = G
+        self._p = p
 
         # Precomputations
         self._edges = list([e for e in self._G.edges])
@@ -116,7 +118,7 @@ class AbstractMCMCSampler(ABC):
         self._edges_dict[frozenset((u, x))] = p1
         self._edges_dict[frozenset((v, y))] = p2
 
-    def _local_swap(self, p):
+    def _local_swap(self):
         """
         Modified double edge swap w/ "localization" feature
         Modification of their code https://github.com/joelnish/double-edge-swap-mcmc/blob/master/dbl_edge_mcmc.py
@@ -139,7 +141,7 @@ class AbstractMCMCSampler(ABC):
             return tuple(sorted((n1, n2)))
 
         # Short circuit for testing & minor performance improvement
-        if p == 1 or np.random.rand() < p:
+        if self._p == 1 or np.random.rand() < self._p:
             self._swap()
             return
 
@@ -188,12 +190,12 @@ class MCMCSampler(AbstractMCMCSampler):
         super().__init__(igraph_to_networkx(g), burn_swaps=burn_swaps,
                          convergence_threshold=convergence_threshold, mixing_swaps=mixing_swaps)
 
-    def get_new_sample(self, p=1):
+    def get_new_sample(self):
         """
         Mix self._G for self._mixing_swaps and return sample
         """
         for _ in range(self._mixing_swaps):
-            self._local_swap(p)
+            self._local_swap()
 
         return networkx_to_igraph(self._G)
 
@@ -209,12 +211,12 @@ class MCMCSamplerNX(AbstractMCMCSampler):
         super().__init__(G, burn_swaps=burn_swaps,
                          convergence_threshold=convergence_threshold, mixing_swaps=mixing_swaps)
 
-    def get_new_sample(self, p=1):
+    def get_new_sample(self):
         """
         Mix self._G for self._mixing_swaps and return sample
         """
         for _ in range(self._mixing_swaps):
-            self._local_swap(p)
+            self._local_swap()
 
         return self._G
 
