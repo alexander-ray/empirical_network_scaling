@@ -19,7 +19,7 @@ class AbstractMCMCSampler(ABC):
 
         # Precomputations
         self._edges = list([e for e in self._G.edges])
-        self._edges_dict = {tuple(sorted(e)): i for i, e in enumerate(self._edges)}
+        self._edges_dict = {frozenset(e): i for i, e in enumerate(self._edges)}
         self._edge_indices = list(range(self._G.number_of_edges()))
         self._m = len(self._edges)
         self._n = len(self._G)
@@ -87,8 +87,7 @@ class AbstractMCMCSampler(ABC):
             p2 = self._m - 1
 
         u, v = self._edges[p1]
-        r = np.random.rand()
-        if r < 0.5:
+        if np.random.rand() < 0.5:
             x, y = self._edges[p2]
         else:
             y, x = self._edges[p2]
@@ -105,19 +104,17 @@ class AbstractMCMCSampler(ABC):
 
         # Remove edges from graph and edge dictionary
         self._G.remove_edges_from([(u, v), (x, y)])
-        self._edges_dict.pop(tuple(sorted((u, v))))
-        self._edges_dict.pop(tuple(sorted((x, y))))
+        self._edges_dict.pop(frozenset((u, v)))
+        self._edges_dict.pop(frozenset((x, y)))
 
         # Replace edges in list
-        new_edge_1 = tuple(sorted((u, x)))
-        new_edge_2 = tuple(sorted((v, y)))
-        self._edges[p1] = new_edge_1
-        self._edges[p2] = new_edge_2
+        self._edges[p1] = (u, x)
+        self._edges[p2] = (v, y)
 
         # Add new edges
-        self._G.add_edges_from([new_edge_1, new_edge_2])
-        self._edges_dict[new_edge_1] = p1
-        self._edges_dict[new_edge_2] = p2
+        self._G.add_edges_from([(u, x), (v, y)])
+        self._edges_dict[frozenset((u, x))] = p1
+        self._edges_dict[frozenset((v, y))] = p2
 
     def _local_swap(self, p):
         """
@@ -141,7 +138,8 @@ class AbstractMCMCSampler(ABC):
                     n2 = i
             return tuple(sorted((n1, n2)))
 
-        if np.random.rand() < p:
+        # Short circuit for testing & minor performance improvement
+        if p == 1 or np.random.rand() < p:
             self._swap()
             return
 
@@ -165,19 +163,17 @@ class AbstractMCMCSampler(ABC):
 
         # Remove edges from graph and edge dictionary
         self._G.remove_edges_from([(u, v), (x, y)])
-        p1 = self._edges_dict.pop(tuple(sorted((u, v))))
-        p2 = self._edges_dict.pop(tuple(sorted((x, y))))
+        p1 = self._edges_dict.pop(frozenset((u, v)))
+        p2 = self._edges_dict.pop(frozenset((x, y)))
 
         # Replace edges in list
-        new_edge_1 = tuple(sorted((u, x)))
-        new_edge_2 = tuple(sorted((v, y)))
-        self._edges[p1] = new_edge_1
-        self._edges[p2] = new_edge_2
+        self._edges[p1] = (u, x)
+        self._edges[p2] = (v, y)
 
         # Add new edges
-        self._G.add_edges_from([new_edge_1, new_edge_2])
-        self._edges_dict[new_edge_1] = p1
-        self._edges_dict[new_edge_2] = p2
+        self._G.add_edges_from([(u, x), (v, y)])
+        self._edges_dict[frozenset((u, x))] = p1
+        self._edges_dict[frozenset((v, y))] = p2
 
 
 class MCMCSampler(AbstractMCMCSampler):
@@ -197,7 +193,8 @@ class MCMCSampler(AbstractMCMCSampler):
         Mix self._G for self._mixing_swaps and return sample
         """
         for _ in range(self._mixing_swaps):
-            self._swap(p)
+            self._local_swap(p)
+
         return networkx_to_igraph(self._G)
 
 
@@ -217,7 +214,8 @@ class MCMCSamplerNX(AbstractMCMCSampler):
         Mix self._G for self._mixing_swaps and return sample
         """
         for _ in range(self._mixing_swaps):
-            self._swap(p)
+            self._local_swap(p)
+
         return self._G
 
 

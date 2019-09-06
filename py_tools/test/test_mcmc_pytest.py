@@ -1,5 +1,6 @@
 from src.graph.mcmc import *
 
+
 #############################################
 # Test: stepping configuration mode
 #############################################
@@ -20,11 +21,9 @@ def test_equality_1():
     np.random.seed(seed)
     sampler = MCMCSamplerNX(G, burn_swaps=0, mixing_swaps=num_swaps)
     G = sampler.get_new_sample()
-    assert nx.is_isomorphic(G, G2) and \
-           nx.degree_assortativity_coefficient(G) == nx.degree_assortativity_coefficient(G2) and \
-           list(G.edges) == list(G2.edges) and \
-           list(G.degree) == list(G2.degree)
 
+    assert list(G.edges) == list(G2.edges) and \
+           list(G.degree) == list(G2.degree)
 
 
 def test_equality_zkc():
