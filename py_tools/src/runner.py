@@ -47,6 +47,30 @@ class BruteMGDGenerator(NetworkStatisticGenerator):
             return [['', n, c, mgd]]
 
 
+class SampledMGDGenerator(NetworkStatisticGenerator):
+    @staticmethod
+    def generate(source):
+        if type(source) == str:
+            g = empirical.igraph_from_gml(source)
+        else:
+            g = source
+
+        n = g.vcount()
+        degrees = list(sorted([d for d in g.degree(mode='ALL', loops=False)]))
+        c = sum(degrees) / n
+
+        samples = ps.threshold_sampler_igraph(g, threshold=0.1, batch_size=1000)
+        approx_mgd = np.mean(samples)
+        # Print info for tracking after calculation has been completed
+        print([source, n, c, approx_mgd])
+        sys.stdout.flush()
+
+        if type(source) == str:
+            return [[source, n, c, approx_mgd]]
+        else:
+            return [['', n, c, approx_mgd]]
+
+
 class DistanceDistributionGenerator(NetworkStatisticGenerator):
     @staticmethod
     def generate(source):
