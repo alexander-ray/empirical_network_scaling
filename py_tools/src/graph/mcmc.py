@@ -179,7 +179,7 @@ class AbstractMCMCSampler(ABC):
 
 
 class MCMCSampler(AbstractMCMCSampler):
-    def __init__(self, g, burn_swaps=None, convergence_threshold=0.05, mixing_swaps=None):
+    def __init__(self, g, burn_swaps=None, convergence_threshold=0.05, mixing_swaps=None, p=1):
         """
         :param g: igraph.Graph
         :param burn_swaps: Number of swaps for burn-in. If falsey, uses convergence threshold
@@ -188,7 +188,7 @@ class MCMCSampler(AbstractMCMCSampler):
         """
         # Networkx version of graph
         super().__init__(igraph_to_networkx(g), burn_swaps=burn_swaps,
-                         convergence_threshold=convergence_threshold, mixing_swaps=mixing_swaps)
+                         convergence_threshold=convergence_threshold, mixing_swaps=mixing_swaps, p=1)
 
     def get_new_sample(self):
         """
@@ -201,7 +201,7 @@ class MCMCSampler(AbstractMCMCSampler):
 
 
 class MCMCSamplerNX(AbstractMCMCSampler):
-    def __init__(self, G, burn_swaps=None, convergence_threshold=0.05, mixing_swaps=None):
+    def __init__(self, G, burn_swaps=None, convergence_threshold=0.05, mixing_swaps=None, p=1):
         """
         :param G: nx.Graph
         :param burn_swaps: Number of swaps for burn-in. If falsey, uses convergence threshold
@@ -209,7 +209,7 @@ class MCMCSamplerNX(AbstractMCMCSampler):
         :param mixing_swaps: Number of swaps between samples. If falsey, default to 2m
         """
         super().__init__(G, burn_swaps=burn_swaps,
-                         convergence_threshold=convergence_threshold, mixing_swaps=mixing_swaps)
+                         convergence_threshold=convergence_threshold, mixing_swaps=mixing_swaps, p=1)
 
     def get_new_sample(self):
         """
