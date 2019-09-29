@@ -131,7 +131,7 @@ class AbstractMCMCSampler(ABC):
                     break
 
             deg1 = self._degrees[n1]
-            deg_diff = -1 * np.inf
+            deg_diff = -1
             n2 = -1
             for i in self._G[n1]:
                 difference = np.abs(self._degrees[i] - deg1)
@@ -141,7 +141,7 @@ class AbstractMCMCSampler(ABC):
             return tuple(sorted((n1, n2)))
 
         # Short circuit for testing & minor performance improvement
-        if self._p == 1 or np.random.rand() < self._p:
+        if (self._p == 1) or (np.random.rand() < self._p):
             self._swap()
             return
 
@@ -188,7 +188,7 @@ class MCMCSampler(AbstractMCMCSampler):
         """
         # Networkx version of graph
         super().__init__(igraph_to_networkx(g), burn_swaps=burn_swaps,
-                         convergence_threshold=convergence_threshold, mixing_swaps=mixing_swaps, p=1)
+                         convergence_threshold=convergence_threshold, mixing_swaps=mixing_swaps, p=p)
 
     def get_new_sample(self):
         """
@@ -209,7 +209,7 @@ class MCMCSamplerNX(AbstractMCMCSampler):
         :param mixing_swaps: Number of swaps between samples. If falsey, default to 2m
         """
         super().__init__(G, burn_swaps=burn_swaps,
-                         convergence_threshold=convergence_threshold, mixing_swaps=mixing_swaps, p=1)
+                         convergence_threshold=convergence_threshold, mixing_swaps=mixing_swaps, p=p)
 
     def get_new_sample(self):
         """
